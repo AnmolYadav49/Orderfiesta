@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Orderista AI System{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <nav>
+        <a href="/" class="nav-brand-container" style="text-decoration: none;">
+            <img src="{% static 'img/logo.png' %}" alt="Logo" class="nav-brand-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block'">
+            <span style="display:none; font-size: 2.2rem; margin-right: 0.5rem; text-shadow: 0 0 15px rgba(255, 51, 102, 0.8);" class="fallback-emoji">🚀</span>
+            <span class="nav-brand">Orderista</span>
+        </a>
+        
+        <form onsubmit="event.preventDefault();" class="search-container" style="margin-left: auto; margin-right: 2.5rem;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="live-search" name="q" class="search-input" placeholder="Search intelligently..." autocomplete="off">
+        </form>
+
+        <div class="nav-links">
+            <a href="/">Home</a>
+            {% if user.is_authenticated %}
+                {% if user.role == 1 %}
+                    <a href="/admin-portal">Admin Portal</a>
+                {% elif user.role == 2 %}
+                    <a href="/canteen">Canteen Dashboard</a>
+                {% endif %}
+                <a href="{% url 'order_list' %}">My Orders</a>
+                <span style="margin-left: 1.5rem; color: var(--text-light); font-weight: 700; letter-spacing: 0.5px;">Hello, {{ user.username }}!</span>
+                <a href="{% url 'logout' %}" class="btn" style="margin-left: 1.5rem; padding: 0.6rem 1.5rem;">Logout</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn" style="margin-left: 1.5rem; padding: 0.6rem 1.5rem;">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+    
+    <div class="container">
+        {% block content %}
+        {% endblock %}
+    </div>
+</body>
+</html>

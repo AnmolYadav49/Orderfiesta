@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 4rem auto;">
+    <div class="card">
+        <h2 style="text-align: center; margin-bottom: 1.5rem;">Login</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div style="display:flex; flex-direction:column; gap:1rem;">
+                {{ form.as_p }}
+            </div>
+            <button type="submit" class="btn" style="width: 100%; margin-top: 1.5rem;">Sign In</button>
+        </form>
+    </div>
+</div>
+<style>
+    /* basic form styling inside django */
+    .card form p { margin: 0; display:flex; flex-direction:column; gap:0.5rem; }
+    .card form input { padding: 0.75rem; border-radius:0.5rem; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.2); color:white; font-family: inherit;}
+</style>
+{% endblock %}

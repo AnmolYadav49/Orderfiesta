@@ -1,0 +1,408 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% if query %}
+<div style="text-align: center; margin-bottom: 4rem; animation: slideStagger 1s both;">
+    <h1 style="font-size: 3.5rem; margin-bottom: 1rem; font-weight: 900;">Search results for <span style="color: var(--secondary);">{{ query }}</span></h1>
+    <a href="/" class="btn btn-outline" style="margin-top: 1rem;">Back to Home</a>
+</div>
+{% else %}
+<div style="text-align: center; margin-bottom: 5rem; animation: slideStagger 1s both;">
+    <h1 style="font-size: 4.5rem; margin-bottom: 1rem; font-weight: 900; letter-spacing: -1px;">Explore the <span style="background: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; color: transparent;">Ultimate</span> Menu</h1>
+    <p style="color: var(--text-muted); font-size: 1.3rem;">Curated cuisines featuring extraordinary flavors, AI recommendations, and full customization.</p>
+</div>
+
+<!-- Category Scroller -->
+<h2 class="cuisine-title">Food Categories</h2>
+<div class="category-scroller" style="margin-bottom: 4rem; animation: slideStagger 0.6s 0.2s both;">
+    <div class="category-pill" onclick="filterCategory('North Indian')"><span class="category-icon">🍛</span><span style="font-weight: bold;">North Indian</span></div>
+    <div class="category-pill" onclick="filterCategory('South Indian')"><span class="category-icon">🥞</span><span style="font-weight: bold;">South Indian</span></div>
+    <div class="category-pill" onclick="filterCategory('Chinese')"><span class="category-icon">🍜</span><span style="font-weight: bold;">Chinese</span></div>
+    <div class="category-pill" onclick="filterCategory('Beverages')"><span class="category-icon">🍹</span><span style="font-weight: bold;">Beverages</span></div>
+</div>
+
+<!-- Best Selling Products -->
+<h2 class="cuisine-title">Best Selling Products</h2>
+<div class="grid" style="margin-bottom: 5rem; animation: slideStagger 0.7s 0.3s both;" id="best-sellers-section">
+    {% for item in best_sellers %}
+    <div class="card" data-name="{{ item.name }}" data-desc="{{ item.description }}" style="border-color: var(--secondary); box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);">
+        <div class="card-content" style="height: 180px;">
+            {% if item.image %}
+            <img src="{{ item.image.url }}" alt="{{ item.name }}">
+            {% else %}
+            <div class="placeholder-img" style="background: var(--glass-bg); display: flex; align-items: center; justify-content: center; font-size: 4rem; height: 100%;">⭐</div>
+            {% endif %}
+        </div>
+        <h3 style="color: var(--secondary); font-size: 1.3rem;">{{ item.name }}</h3>
+        <div class="price-row" style="margin-top: 1rem;">
+            <span class="price" style="font-size: 1.3rem;">${{ item.price }}</span>
+            <button class="btn" style="background: var(--secondary); color: var(--bg-color); width: auto; padding: 0.5rem 1.5rem;" onclick="addToCart({{ item.id }}, '{{ item.name|escapejs }}', {{ item.price }})">+ Add</button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Dynamic Cuisine Grouping -->
+{% for cuisine, items in grouped_items.items %}
+<div class="cuisine-section" style="animation-delay: 0.{{ forloop.counter|add:'3' }}s;" data-cuisine="{{ cuisine }}">
+    <h2 class="cuisine-title">{{ cuisine }}</h2>
+    <div class="grid">
+        {% for item in items %}
+        <div class="card" data-name="{{ item.name }}" data-desc="{{ item.description }}">
+            
+            <!-- Customization Overlay -->
+            <div class="customize-overlay" id="custom-{{ item.id }}">
+                <span class="customize-close" onclick="document.getElementById('custom-{{ item.id }}').classList.remove('active')">&times;</span>
+                <h3 style="margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;">Customize <span style="color: var(--secondary);">{{ item.name }}</span></h3>
+                
+                {% if item.cuisine == 'Beverages' %}
+                <div class="custom-option">
+                    <label>Sugar Level</label>
+                    <select>
+                        <option>Regular Sugar</option>
+                        <option>Less Sugar (50%)</option>
+                        <option>No Sugar</option>
+                    </select>
+                </div>
+                {% if item.name != 'Masala Chai' %}
+                <div class="custom-option">
+                    <label>Ice Level</label>
+                    <select>
+                        <option>Regular Ice</option>
+                        <option>Less Ice</option>
+                        <option>No Ice</option>
+                    </select>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="custom-option">
+                    <label>Spice Level</label>
+                    <select>
+                        <option>Mild</option>
+                        <option>Spicy</option>
+                    </select>
+                </div>
+                <div class="custom-option">
+                    <label>Add-ons</label>
+                    <select>
+                        <option>None</option>
+                        <option>Extra Cheese (+$1)</option>
+                        <option>Double Portion (+$5)</option>
+                    </select>
+                </div>
+                {% endif %}
+                <button class="btn" style="margin-top: 2rem;" onclick="document.getElementById('custom-{{ item.id }}').classList.remove('active'); addToCart({{ item.id }}, '{{ item.name|escapejs }}', {{ item.price }});">Confirm & Add</button>
+            </div>
+
+            <!-- Standard Card View -->
+            <div class="card-content">
+                {% if item.image %}
+                <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                {% else %}
+                <div class="placeholder-img" style="background: var(--glass-bg); display: flex; align-items: center; justify-content: center; font-size: 4rem;">🍽️</div>
+                {% endif %}
+            </div>
+            
+            <h3>{{ item.name }}</h3>
+            <p>{{ item.description|default:"No description available." }}</p>
+            
+            <div class="price-row">
+                <span class="price">${{ item.price }}</span>
+            </div>
+            
+            <div class="actions">
+                {% if item.customizable %}
+                <button class="btn btn-outline" onclick="document.getElementById('custom-{{ item.id }}').classList.add('active')">Customize</button>
+                {% endif %}
+                <button class="btn" onclick="addToCart({{ item.id }}, '{{ item.name|escapejs }}', {{ item.price }})">Add to Cart</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% empty %}
+<h3 style="text-align: center; color: var(--text-muted);">No items found.</h3>
+{% endfor %}
+
+<!-- Cart Overlay & Modal -->
+<div id="cart-overlay" onclick="toggleCartModal()"></div>
+<div id="cart-modal">
+    <div class="cart-left-pane">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+            <h2 style="margin: 0; font-size: 2.5rem; font-weight: 900; background: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; color: transparent;">Your Cart</h2>
+            <span class="customize-close" style="position: static;" onclick="toggleCartModal()">&times;</span>
+        </div>
+        
+        <div id="cart-items-list" style="flex: 1; display: flex; flex-direction: column; gap: 1.5rem;">
+            <p style="color: var(--text-muted); font-size: 1.2rem;">Cart is empty.</p>
+        </div>
+    </div>
+    
+    <div class="cart-right-pane">
+        <h3 style="font-size: 1.8rem; margin-top: 0; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem;">Checkout Summary</h3>
+        
+        <div style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; margin-bottom: 0.75rem;">
+            <span style="color: var(--text-muted);">Subtotal</span><span id="cart-subtotal">$0.00</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; color: var(--text-muted); margin-bottom: 2rem;">
+            <span>Taxes & Fees</span><span id="cart-taxes">$0.00</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 2.2rem; font-weight: 900; margin-bottom: 2rem; color: var(--primary);">
+            <span>Order Total</span><span id="cart-total">$0.00</span>
+        </div>
+        
+        <!-- Delivery Address -->
+        <h4 style="margin-bottom: 1rem; color: var(--text-light); font-size: 1.2rem;">Delivery Address</h4>
+        <select id="address-select" style="width: 100%; background: var(--bg-color); color: white; border: 1px solid var(--border-color); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; font-family: inherit; font-size: 1rem; outline: none; transition: border-color 0.3s; cursor: pointer;">
+            <option value="saved1">Home: 123 Cyber Lane, Tech City</option>
+            <option value="saved2">Office: 404 Matrix Bay, Block C</option>
+            <option value="add">+ Add New Address...</option>
+        </select>
+        
+        <h4 style="margin-bottom: 1rem; color: var(--text-light); font-size: 1.2rem;">Payment Mode</h4>
+        <div class="payment-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: auto;">
+            <label class="payment-box">
+                <input type="radio" name="payment" value="card" checked> 
+                <span>💳 Credit/Debit</span>
+            </label>
+            <label class="payment-box">
+                <input type="radio" name="payment" value="upi"> 
+                <span>📱 UPI Apps</span>
+            </label>
+            <label class="payment-box" style="grid-column: span 2;">
+                <input type="radio" name="payment" value="cash"> 
+                <span>💵 Cash on Delivery</span>
+            </label>
+        </div>
+        
+        <button class="btn" style="width: 100%; font-size: 1.3rem; padding: 1.2rem; font-family: 'Outfit', sans-serif; box-shadow: 0 10px 30px rgba(255,51,102,0.4); margin-top: 2rem;" onclick="checkout()">Checkout 🚀</button>
+    </div>
+</div>
+
+<!-- Floating Real-Time Cart Widget -->
+<div id="cart-widget" style="position: fixed; bottom: 2rem; left: 2rem; z-index: 1001; display: none; background: var(--primary); width: 65px; height: 65px; border-radius: 50%; box-shadow: 0 10px 40px rgba(255, 51, 102, 0.6); align-items: center; justify-content: center; cursor: pointer; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);" onclick="toggleCartModal()">
+    <span style="font-size: 1.8rem; transform: translateY(2px);">🛒</span>
+    <div id="cart-badge" style="position: absolute; top: -5px; right: -5px; background: white; color: var(--primary); font-weight: 900; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.2s;">0</div>
+</div>
+
+<!-- Floating AI Chatbot MVP -->
+<div id="chat-window" class="card" style="display: none; position: fixed; bottom: 6rem; right: 2rem; width: 300px; height: 400px; flex-direction: column; z-index: 1000; padding: 1rem; box-shadow: 0 20px 50px rgba(0,0,0,0.8);">
+    <div style="font-weight: bold; margin-bottom: 1rem; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; font-family: 'Outfit'; font-size: 1.2rem;">AI Assistant</div>
+    <div id="chat-history" style="flex: 1; overflow-y: auto; margin-bottom: 1rem; font-size: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 0.5rem;">
+        <div style="background: rgba(0,229,255,0.1); color: var(--secondary); padding: 0.75rem; border-radius: 1rem; border: 1px solid rgba(0,229,255,0.2); align-self: flex-start;">Hello! How can I help you today?</div>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+        <input type="text" id="chat-input" placeholder="Type..." style="border-radius: 9999px;" onkeypress="if(event.key==='Enter') sendMessage()">
+        <button class="btn" style="padding: 0.5rem 1.25rem;" onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<div style="position: fixed; bottom: 2rem; right: 2rem; z-index: 1001;">
+    <button class="btn floating-chat-btn" onclick="toggleChat()" style="border-radius: 50%; width: 65px; height: 65px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; padding: 0;" title="Chat with AI">💬</button>
+</div>
+
+<script>
+    // Live Interactive Search Filtering
+    const searchInput = document.getElementById('live-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const val = this.value.toLowerCase().trim();
+            filterCards(val);
+        });
+    }
+
+    function filterCategory(cuisineName) {
+        const searchInst = document.getElementById('live-search');
+        if(searchInst) searchInst.value = ''; // clear search
+        
+        const v = cuisineName.toLowerCase();
+        document.querySelectorAll('.cuisine-section').forEach(sec => {
+            const cName = (sec.getAttribute('data-cuisine') || '').toLowerCase();
+            if (cName.includes(v)) {
+                sec.style.display = 'block';
+                sec.style.animation = 'slideStagger 0.4s both';
+            } else {
+                sec.style.display = 'none';
+            }
+        });
+        
+        const bsSect = document.getElementById('best-sellers-section');
+        if(bsSect) bsSect.style.display = 'none';
+        
+        window.scrollBy({ top: 400, left: 0, behavior: 'smooth' });
+    }
+
+    function filterCards(val) {
+        const cards = document.querySelectorAll('.card[data-name]');
+        cards.forEach(card => {
+            const name = card.getAttribute('data-name').toLowerCase();
+            const desc = (card.getAttribute('data-desc') || '').toLowerCase();
+            
+            if (name.includes(val) || desc.includes(val)) {
+                if(card.style.display === 'none' || card.classList.contains('hidden-card')) {
+                    card.style.display = 'block';
+                    card.classList.remove('hidden-card');
+                    card.style.animation = 'slideStagger 0.2s both';
+                }
+            } else {
+                card.style.display = 'none';
+                card.classList.add('hidden-card');
+            }
+        });
+        
+        document.querySelectorAll('.cuisine-section').forEach(sec => {
+            const visibleCards = sec.querySelectorAll('.card:not(.hidden-card)');
+            if (visibleCards.length === 0) {
+                sec.style.display = 'none';
+            } else {
+                sec.style.display = 'block';
+            }
+        });
+        
+        const bsSect = document.getElementById('best-sellers-section');
+        if (bsSect) {
+            const bsVis = bsSect.querySelectorAll('.card:not(.hidden-card)');
+            bsSect.style.display = bsVis.length === 0 ? 'none' : 'grid';
+        }
+    }
+
+    // Cart State & Modal Handlers
+    let cartState = [];
+    function addToCart(id, name, price) {
+        cartState.push({id, name, price});
+        updateCartUI();
+        
+        const widget = document.getElementById('cart-widget');
+        const badge = document.getElementById('cart-badge');
+        
+        if (cartState.length === 1) {
+            widget.style.display = 'flex';
+            widget.style.animation = 'slideStagger 0.5s both';
+        }
+        
+        badge.innerText = cartState.length;
+        badge.style.transform = 'scale(1.6)';
+        setTimeout(() => badge.style.transform = 'scale(1)', 200);
+        widget.style.transform = 'scale(1.1) rotate(-15deg)';
+        setTimeout(() => widget.style.transform = 'scale(1) rotate(0)', 300);
+    }
+    
+    function updateCartUI() {
+        const list = document.getElementById('cart-items-list');
+        const subtotalEl = document.getElementById('cart-subtotal');
+        const taxesEl = document.getElementById('cart-taxes');
+        const totalEl = document.getElementById('cart-total');
+        
+        if (cartState.length === 0) {
+            list.innerHTML = '<p style="color: var(--text-muted); font-size: 1.2rem;">Cart is surprisingly empty! Add some delicious food.</p>';
+            subtotalEl.innerText = '$0.00';
+            taxesEl.innerText = '$0.00';
+            totalEl.innerText = '$0.00';
+            return;
+        }
+        
+        list.innerHTML = '';
+        let subtotal = 0;
+        cartState.forEach((item, index) => {
+            subtotal += parseFloat(item.price);
+            list.innerHTML += `
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 1.25rem; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.05); animation: slideStagger 0.3s both;">
+                <div>
+                    <p style="margin: 0; font-weight: bold; font-size: 1.3rem; color: white;">${item.name}</p>
+                    <p style="margin: 0; color: var(--secondary); font-size: 1.1rem; margin-top: 0.35rem;">$${item.price}</p>
+                </div>
+                <button style="border: none; background: rgba(255,51,102,0.1); color: var(--primary); font-size: 1.5rem; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);" onclick="removeFromCart(${index})" onmouseover="this.style.background='rgba(255,51,102,0.3)'; this.style.transform='scale(1.2) rotate(90deg)';" onmouseout="this.style.background='rgba(255,51,102,0.1)'; this.style.transform='scale(1) rotate(0)';">&times;</button>
+            </div>`;
+        });
+        
+        const taxes = subtotal * 0.10;
+        const total = subtotal + taxes;
+        
+        subtotalEl.innerText = '$' + subtotal.toFixed(2);
+        taxesEl.innerText = '$' + taxes.toFixed(2);
+        totalEl.innerText = '$' + total.toFixed(2);
+    }
+    
+    function removeFromCart(index) {
+        cartState.splice(index, 1);
+        updateCartUI();
+        const badge = document.getElementById('cart-badge');
+        badge.innerText = cartState.length;
+        if (cartState.length === 0) {
+            document.getElementById('cart-widget').style.display = 'none';
+        }
+    }
+    
+    function toggleCartModal() {
+        if (cartState.length === 0 && !document.getElementById('cart-modal').classList.contains('open')) {
+            alert("Cart is empty! Add some delicious food first."); return;
+        }
+        const modal = document.getElementById('cart-modal');
+        const overlay = document.getElementById('cart-overlay');
+        if (modal.classList.contains('open')) {
+            modal.classList.remove('open');
+            overlay.style.display = 'none';
+        } else {
+            modal.classList.add('open');
+            overlay.style.display = 'block';
+        }
+    }
+    
+    function checkout() {
+        const addr = document.getElementById('address-select').value;
+        if(addr === 'add') {
+            alert("Please enter a new delivery address."); return;
+        }
+        const dd = document.getElementById('address-select');
+        const addrText = dd.options[dd.selectedIndex].text;
+        alert("Redirecting to secure Payment Gateway...\nShipping To: " + addrText + "\nTotal Amount: " + document.getElementById('cart-total').innerText);
+        cartState = [];
+        updateCartUI();
+        document.getElementById('cart-badge').innerText = '0';
+        document.getElementById('cart-widget').style.display = 'none';
+        toggleCartModal();
+    }
+
+    // Chatbot functionality
+    function toggleChat() {
+        const cw = document.getElementById('chat-window');
+        cw.style.display = cw.style.display === 'none' ? 'flex' : 'none';
+        if(cw.style.display === 'flex') document.getElementById('chat-input').focus();
+    }
+    
+    async function sendMessage() {
+        const input = document.getElementById('chat-input');
+        const msg = input.value.trim();
+        if(!msg) return;
+        
+        const history = document.getElementById('chat-history');
+        history.innerHTML += `<div style="background: rgba(255,255,255,0.1); color: white; padding: 0.75rem; border-radius: 1rem; align-self: flex-end; max-width: 80%;">${msg}</div>`;
+        input.value = '';
+        history.scrollTop = history.scrollHeight;
+        
+        const typingId = 'typing-' + Date.now();
+        history.innerHTML += `<div id="${typingId}" style="color: var(--text-muted); font-size: 0.8rem; align-self: flex-start; padding: 0.5rem;">AI is computing...</div>`;
+        history.scrollTop = history.scrollHeight;
+
+        try {
+            const res = await fetch('/api/chat/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: msg})
+            });
+            const data = await res.json();
+            document.getElementById(typingId).remove();
+            
+            if(data.reply) {
+                history.innerHTML += `<div style="background: rgba(0,229,255,0.1); color: var(--secondary); padding: 0.75rem; border-radius: 1rem; border: 1px solid rgba(0,229,255,0.2); align-self: flex-start; max-width: 80%;">${data.reply}</div>`;
+            }
+        } catch(e) {
+            document.getElementById(typingId).remove();
+            history.innerHTML += `<div style="color: red; font-size: 0.8rem; align-self: flex-start; padding: 0.5rem;">Connection error.</div>`;
+        }
+        history.scrollTop = history.scrollHeight;
+    }
+</script>
+{% endblock %}

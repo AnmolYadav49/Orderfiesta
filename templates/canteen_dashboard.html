@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2>Canteen Dashboard</h2>
+    <button class="btn" style="background: var(--accent); color: var(--bg-dark);">+ Add Menu Item</button>
+</div>
+
+<div class="grid" style="margin-bottom: 3rem;">
+    <div class="card" style="text-align: center; background: rgba(34, 211, 238, 0.1); border-color: var(--accent);">
+        <h3 style="font-size: 3rem; margin: 0; color: var(--accent);">{{ total_orders }}</h3>
+        <p style="color: var(--text-muted);">Total Platform Orders</p>
+    </div>
+    <div class="card" style="text-align: center; background: rgba(99, 102, 241, 0.1); border-color: var(--primary);">
+        <h3 style="font-size: 3rem; margin: 0; color: var(--primary);">{{ menu_items.count }}</h3>
+        <p style="color: var(--text-muted);">Your Active Menu Items</p>
+    </div>
+</div>
+
+<h3>Your Menu Items</h3>
+<div class="grid" style="margin-top: 1rem;">
+    {% for item in menu_items %}
+    <div class="card">
+        <h4>{{ item.name }}</h4>
+        <p style="color: var(--accent); font-weight: bold;">${{ item.price }}</p>
+        <p>Status: {% if item.is_available %}Available{% else %}Hidden{% endif %}</p>
+        <button class="btn" style="font-size: 0.8rem; padding: 0.5rem 1rem;">Edit</button>
+    </div>
+    {% empty %}
+    <div style="grid-column: 1 / -1; padding: 2rem; background: var(--bg-dark-elem); border-radius: 1rem; text-align: center;">
+        You haven't added any menu items yet.
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
